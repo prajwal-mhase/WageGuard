@@ -1,11 +1,14 @@
 import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     database_url: str = os.environ.get("DATABASE_URL", "")
-    supabase_url: str = os.environ.get("SUPABASE_URL", "")
-    supabase_jwt_secret: str = os.environ.get("SUPABASE_JWT_SECRET", "")
+    database_path: str = os.environ.get(
+        "DATABASE_PATH", str(Path(__file__).resolve().parent / "wageguard.db")
+    )
+    jwt_secret: str = os.environ.get("JWT_SECRET", "wageguard-local-dev-secret")
     frontend_origin: str = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
     working_days_per_month: int = 26
 

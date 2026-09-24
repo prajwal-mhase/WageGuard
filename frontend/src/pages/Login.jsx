@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../lib/useAuth'
 
 export default function Login() {
   const [mode, setMode] = useState('signin') // 'signin' | 'signup'
@@ -9,17 +9,14 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { signIn, signUp } = useAuth()
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const fn = mode === 'signin'
-        ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({ email, password })
-      const { error: authError } = await fn
-      if (authError) throw authError
+      await (mode === 'signin' ? signIn(email, password) : signUp(email, password))
       navigate('/dashboard')
     } catch (err) {
       setError(err.message || 'Something went wrong')

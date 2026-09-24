@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from routes import entries, rates, reports
+from database import init_db
+
+from fastapi import HTTPException
+from pydantic import BaseModel, Field
+from auth import create_token, new_user_id, hash_password, verify_password
+from database import get_cursor
 
 app = FastAPI(
     title="WageGuard API",
@@ -26,6 +32,38 @@ app.add_middleware(
 app.include_router(entries.router)
 app.include_router(rates.router)
 app.include_router(reports.router)
+
+
+class AuthIn(BaseModel):
+    email: str = Field(min_length=3)
+    password: str = Field(min_length=6)
+
+
+@app.on_event("startup")
+def startup():
+    init_db()
+
+
+@app.post("/auth/signup")
+def signup(payload: AuthIn):
+    user_id = new_user_id()
+    with get_cursor(commit=True) as cur:
+        try:
+            cur.execute("insert into users (id, email, password_hash) values (?, ?, ?)",
+                        (user_id, payload.email.lower(), hash_password(payload.password)))
+        except Exception:
+            raise HTTPException(status_code=409, detail="An account with that email already exists")
+    return {"access_token": create_token(user_id), "user": {"id": user_id, "email": payload.email.lower()}}
+
+
+@app.post("/auth/login")
+def login(payload: AuthIn):
+    with get_cursor() as cur:
+        cur.execute("select id, email, password_hash from users where email = ?", (payload.email.lower(),))
+        user = cur.fetchone()
+    if not user or not verify_password(payload.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    return {"access_token": create_token(user["id"]), "user": {"id": user["id"], "email": user["email"]}}
 
 
 @app.get("/health")

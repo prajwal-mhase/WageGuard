@@ -1,10 +1,11 @@
-import { supabase } from './supabaseClient'
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
+export function getToken() {
+  return localStorage.getItem('wageguard_token')
+}
+
 async function authedFetch(path, options = {}) {
-  const { data: { session } } = await supabase.auth.getSession()
-  const token = session?.access_token
+  const token = getToken()
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -46,8 +47,7 @@ export const api = {
    * open it in a new tab (PDF/HTML) or trigger a download.
    */
   async getReport(id) {
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token
+    const token = getToken()
     if (!token) throw new Error('Not signed in')
 
     const res = await fetch(`${API_BASE}/entries/${id}/report`, {

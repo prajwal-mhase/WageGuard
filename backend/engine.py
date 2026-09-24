@@ -35,7 +35,7 @@ def find_wage_rate(zone: str, skill_tier: str, job_date: date) -> dict:
         limit 1
     """
     with get_cursor() as cur:
-        cur.execute(query, (zone, skill_tier, job_date, job_date))
+        cur.execute(query.replace("%s", "?"), (zone, skill_tier, job_date, job_date))
         row = cur.fetchone()
 
     if not row:

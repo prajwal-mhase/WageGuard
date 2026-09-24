@@ -12,19 +12,13 @@ wageguard/
 └── frontend/        React + Vite + Tailwind app
 ```
 
-## 2. Supabase setup
+## 2. Local persistent storage
 
-1. Create a project at https://supabase.com.
-2. Go to **SQL Editor** → run `db/schema.sql` → run `db/seed.sql`.
-3. Go to **Authentication > Providers** → ensure Email provider is enabled
-   (default). Turn off "Confirm email" for faster hackathon demo sign-ups
-   (Authentication > Settings), or use a real inbox if you keep it on.
-4. Get credentials from **Project Settings > API**:
-   - Project URL → `SUPABASE_URL` / `VITE_SUPABASE_URL`
-   - anon public key → `VITE_SUPABASE_ANON_KEY`
-   - JWT Secret (API > JWT Settings) → `SUPABASE_JWT_SECRET`
-5. Get the DB connection string from **Project Settings > Database >
-   Connection string > URI** → `DATABASE_URL`.
+This prototype uses a local SQLite database. The API creates `backend/wageguard.db`
+and seeds the three reference rates automatically on first startup. Accounts,
+entries, and calculations remain available across restarts as long as that file
+is retained. For a hosted prototype, attach a persistent disk and set
+`DATABASE_PATH` to a path on that disk.
 
 ## 3. Backend — local setup
 
@@ -33,7 +27,7 @@ cd backend
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env            # then fill in real values
+copy .env.example .env         # Windows; edit JWT_SECRET for shared hosting
 uvicorn main:app --reload --port 8000
 ```
 
@@ -50,7 +44,7 @@ Health check: open http://localhost:8000/health — should return
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local      # then fill in real values
+copy .env.example .env.local    # optional; localhost is the default
 npm run dev
 ```
 
@@ -59,9 +53,9 @@ Open http://localhost:5173.
 ## 5. Demo data
 
 1. Sign up a user through the running app (`/login` → "Create an account").
-2. In Supabase Dashboard → Authentication → Users, copy that user's UUID.
-3. Open `db/demo_seed.sql`, replace `REPLACE_WITH_DEMO_USER_UUID` with that
-   UUID (3 occurrences), run it in the SQL Editor.
+2. For demo rows, insert the SQL in `db/demo_seed.sql` after replacing the
+   placeholder with the user's local UUID from `backend/wageguard.db`, or use
+   the app to create entries.
 4. Refresh the dashboard — you should see 3 jobs dated **12–14 June 2026**
    (inside the seeded rate window of 1 Jan–30 Jun 2026), ₹1,970 total
    earnings, ₹2,673 reference earnings, ₹703 potential cumulative
@@ -99,7 +93,7 @@ mention this if asked during Q&A.
 cd frontend
 npm install -g vercel
 vercel
-# set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_BASE_URL
+# set VITE_API_BASE_URL to the deployed backend URL
 # as Environment Variables in the Vercel dashboard, then:
 vercel --prod
 ```
@@ -109,8 +103,9 @@ vercel --prod
 - New Web Service → connect repo → root directory `backend`.
 - Build command: `pip install -r requirements.txt`
 - Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Add environment variables: `DATABASE_URL`, `SUPABASE_URL`,
-  `SUPABASE_JWT_SECRET`, `FRONTEND_ORIGIN` (your deployed Vercel URL).
+- Add environment variables: `DATABASE_PATH` (on a persistent disk),
+  `JWT_SECRET` (a long random value), and `FRONTEND_ORIGIN` (your deployed
+  Vercel URL).
 
 After both are deployed, update the frontend's `VITE_API_BASE_URL` to the
 backend's public URL and redeploy the frontend.
