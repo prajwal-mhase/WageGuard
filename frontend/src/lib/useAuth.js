@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 import { getToken } from './api'
 export function useAuth() {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('wageguard_user') || 'null'))
+  // AUTH BYPASS: always treat as logged-in demo user
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('wageguard_user') || 'null') || { id: 'demo', email: 'demo@wageguard.local' })
   const [loading, setLoading] = useState(false)
 
   const authenticate = useCallback(async (path, email, password) => {

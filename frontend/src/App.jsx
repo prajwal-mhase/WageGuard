@@ -17,7 +17,8 @@ function Protected({ children }) {
       </div>
     )
   }
-  if (!user) return <Navigate to="/login" replace />
+  // AUTH BYPASS: skip redirect
+  // if (!user) return <Navigate to="/login" replace />
   return children
 }
 
