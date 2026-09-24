@@ -72,7 +72,9 @@ REPORT_TEMPLATE = Template("""
 @router.get("/{entry_id}/report", response_class=HTMLResponse)
 def get_report(entry_id: int, user_id: str = Depends(get_current_user_id)):
     query = """
-        select je.*, wr.state, wr.scheduled_employment, wr.zone as rate_zone,
+        select je.id, je.job_date, je.zone, je.skill_tier, je.hours_worked,
+               je.amount_paid, je.status, je.calculation_note,
+               wr.state, wr.scheduled_employment, wr.zone as rate_zone,
                wr.daily_equivalent, wr.effective_from, wr.effective_to, wr.source_name
         from job_entries je
         join wage_rates wr on wr.id = je.wage_rate_id
@@ -80,11 +82,12 @@ def get_report(entry_id: int, user_id: str = Depends(get_current_user_id)):
     """
     with get_cursor() as cur:
         cur.execute(sql(query), (entry_id, user_id))
-        row = cur.fetchone()
+        raw = cur.fetchone()
 
-    if not row:
+    if not raw:
         raise HTTPException(status_code=404, detail="Entry not found")
 
+    row = dict(raw)
     rate = {
         "state": row["state"], "scheduled_employment": row["scheduled_employment"],
         "zone": row["rate_zone"], "daily_equivalent": row["daily_equivalent"],

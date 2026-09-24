@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuth } from './lib/useAuth'
-import Login from './pages/Login'
+import { setUnauthorizedHandler } from './lib/api'
+import { ToastProvider } from './components/Toast'
 import Dashboard from './pages/Dashboard'
 import AddJob from './pages/AddJob'
 import EntryDetail from './pages/EntryDetail'
@@ -8,33 +10,32 @@ import Ledger from './pages/Ledger'
 import ReferenceRules from './pages/ReferenceRules'
 import About from './pages/About'
 
-function Protected({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">
-        Loading…
-      </div>
-    )
-  }
-  // AUTH BYPASS: skip redirect
-  // if (!user) return <Navigate to="/login" replace />
-  return children
+function AppRoutes() {
+  const { signOut } = useAuth()
+
+  useEffect(() => {
+    setUnauthorizedHandler(signOut)
+  }, [signOut])
+
+  return (
+    <Routes>
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/add-job" element={<AddJob />} />
+      <Route path="/result/:id" element={<EntryDetail />} />
+      <Route path="/entry/:id" element={<EntryDetail />} />
+      <Route path="/ledger" element={<Ledger />} />
+      <Route path="/reference-rules" element={<ReferenceRules />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  )
 }
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-      <Route path="/add-job" element={<Protected><AddJob /></Protected>} />
-      <Route path="/result/:id" element={<Protected><EntryDetail /></Protected>} />
-      <Route path="/entry/:id" element={<Protected><EntryDetail /></Protected>} />
-      <Route path="/ledger" element={<Protected><Ledger /></Protected>} />
-      <Route path="/reference-rules" element={<Protected><ReferenceRules /></Protected>} />
-      <Route path="/about" element={<Protected><About /></Protected>} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+    <ToastProvider>
+      <AppRoutes />
+    </ToastProvider>
   )
 }

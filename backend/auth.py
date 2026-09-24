@@ -11,12 +11,9 @@ from config import settings
 
 def get_current_user_id(authorization: str = Header(None)) -> str:
     """
-    Expects: Authorization: Bearer <supabase access token>
-    Verifies the token using the Supabase project's JWT secret and
-    returns the user's UUID (the `sub` claim).
-
-    The backend NEVER receives or uses the Supabase service-role key
-    from the frontend. This function only verifies a user-issued token.
+    Expects: Authorization: Bearer <JWT>
+    Verifies the token using the configured JWT_SECRET and returns the user's ID (the `sub` claim).
+    Works for both real accounts and guest sessions.
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")

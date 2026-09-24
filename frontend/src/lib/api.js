@@ -4,6 +4,10 @@ export function getToken() {
   return localStorage.getItem('wageguard_token')
 }
 
+// Callback set by App to handle global 401 (token expired)
+let _onUnauthorized = null
+export function setUnauthorizedHandler(fn) { _onUnauthorized = fn }
+
 async function authedFetch(path, options = {}) {
   const token = getToken()
 
@@ -15,6 +19,11 @@ async function authedFetch(path, options = {}) {
       ...(options.headers || {}),
     },
   })
+
+  if (res.status === 401) {
+    if (_onUnauthorized) _onUnauthorized()
+    throw new Error('Session expired. Please sign in again.')
+  }
 
   if (!res.ok) {
     let detail = `Request failed (${res.status})`
@@ -38,28 +47,25 @@ export const api = {
   getSummary: () => authedFetch('/entries/summary'),
   getRates: () => authedFetch('/rates'),
 
-  /**
-   * Fetches the report with the Authorization header (a plain <a href>
-   * to this endpoint would 401, since the backend requires a Bearer
-   * token and a bare browser navigation can't attach one).
-   *
-   * Returns { blob, contentType, filename } so the caller can either
-   * open it in a new tab (PDF/HTML) or trigger a download.
-   */
   async getReport(id) {
     const token = getToken()
-    if (!token) throw new Error('Not signed in')
+    if (!token) throw new Error('Sign in to export a report')
 
     const res = await fetch(`${API_BASE}/entries/${id}/report`, {
       headers: { Authorization: `Bearer ${token}` },
     })
+
+    if (res.status === 401) {
+      if (_onUnauthorized) _onUnauthorized()
+      throw new Error('Session expired. Please sign in again.')
+    }
 
     if (!res.ok) {
       let detail = `Could not generate report (${res.status})`
       try {
         const body = await res.json()
         detail = body.detail || detail
-      } catch (_) { /* non-JSON error body, e.g. plain 401 */ }
+      } catch (_) { /* non-JSON */ }
       throw new Error(detail)
     }
 
@@ -67,7 +73,6 @@ export const api = {
     const blob = await res.blob()
     const isPdf = contentType.includes('application/pdf')
     const filename = `wageguard-report-${id}.${isPdf ? 'pdf' : 'html'}`
-
     return { blob, contentType, filename }
   },
 }

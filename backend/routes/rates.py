@@ -23,4 +23,4 @@ def list_rates():
     with get_cursor() as cur:
         cur.execute(query)
         rows = cur.fetchall()
-    return [WageRateOut(**row) for row in rows]
+    return [WageRateOut(**dict(row)) for row in rows]
