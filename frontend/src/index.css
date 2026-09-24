@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { font-family: 'Inter', system-ui, sans-serif; }
+
+.card {
+  @apply bg-white rounded-2xl border border-gray-200 p-4 shadow-sm;
+}
+
+.btn-primary {
+  @apply w-full bg-ink text-white rounded-xl py-3 font-semibold text-sm
+         transition-transform active:scale-[0.98] disabled:opacity-40;
+}
+
+.input {
+  @apply w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm
+         focus:outline-none focus:ring-2 focus:ring-ink/20 bg-white;
+}
