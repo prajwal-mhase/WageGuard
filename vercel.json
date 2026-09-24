@@ -1,3 +1,9 @@
 {
-  "comment": "This root vercel.json is intentionally minimal. The frontend is deployed from the frontend/ subdirectory using its own vercel.json. The backend is deployed separately to Render or Railway. Do NOT add Python runtime config here."
+  "buildCommand": "cd frontend && npm run build",
+  "installCommand": "cd frontend && npm install",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
