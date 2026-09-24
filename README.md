@@ -88,7 +88,29 @@ mention this if asked during Q&A.
 
 ## 7. Deployment
 
-**Frontend (Vercel):**
+**Frontend and backend together (Vercel):**
+
+The repository root contains `vercel.json`, `api/index.py`, and
+`requirements.txt` for a single Vercel project. Import the GitHub repository
+with the root directory set to `.`. Vercel builds the Vite frontend and serves
+FastAPI under `/api`.
+
+Set these Vercel environment variables:
+
+```text
+VITE_API_BASE_URL=/api
+JWT_SECRET=replace-with-a-long-random-secret
+```
+
+The current SQLite database is appropriate for local development only. Vercel
+serverless storage is ephemeral, so use Vercel Postgres, Neon, Supabase, or
+another persistent database before relying on hosted data.
+
+```bash
+vercel --prod
+```
+
+**Frontend-only Vercel alternative:**
 ```bash
 cd frontend
 npm install -g vercel
