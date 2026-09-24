@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth import get_current_user_id
-from database import get_cursor
+from database import get_cursor, sql
 from engine import compute_comparison, NoReferenceRateError
 from schemas import JobEntryIn, JobEntryOut, LedgerSummary, WageRateOut
 
@@ -61,7 +61,7 @@ def create_entry(entry: JobEntryIn, user_id: str = Depends(get_current_user_id))
         result["potential_gap"], result["status"], result["calculation_note"],
     )
     with get_cursor(commit=True) as cur:
-        cur.execute(insert_query.replace("%s", "?"), params)
+        cur.execute(sql(insert_query), params)
         row = cur.fetchone()
 
     return _row_to_entry_out(row, result["reference_rate"])
@@ -80,7 +80,7 @@ def list_entries(user_id: str = Depends(get_current_user_id)):
         order by je.job_date desc, je.created_at desc
     """
     with get_cursor() as cur:
-        cur.execute(query.replace("%s", "?"), (user_id,))
+        cur.execute(sql(query), (user_id,))
         rows = cur.fetchall()
 
     out = []
@@ -110,7 +110,7 @@ def summary(user_id: str = Depends(get_current_user_id)):
         where je.user_id = %s
     """
     with get_cursor() as cur:
-        cur.execute(query.replace("%s", "?"), (user_id,))
+        cur.execute(sql(query), (user_id,))
         row = cur.fetchone()
 
     return LedgerSummary(
@@ -133,7 +133,7 @@ def get_entry(entry_id: int, user_id: str = Depends(get_current_user_id)):
         where je.id = %s and je.user_id = %s
     """
     with get_cursor() as cur:
-        cur.execute(query.replace("%s", "?"), (entry_id, user_id))
+        cur.execute(sql(query), (entry_id, user_id))
         row = cur.fetchone()
 
     if not row:

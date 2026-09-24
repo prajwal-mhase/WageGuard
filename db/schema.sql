@@ -1,6 +1,13 @@
 -- WageGuard schema
 -- Run this in the Supabase SQL editor (or psql connected to your Supabase DB)
 
+create table if not exists users (
+  id uuid primary key,
+  email text unique not null,
+  password_hash text not null,
+  created_at timestamptz default now()
+);
+
 create table if not exists wage_rates (
   id serial primary key,
   state text not null default 'Maharashtra',
@@ -21,7 +28,7 @@ create index if not exists idx_wage_rates_lookup
 
 create table if not exists job_entries (
   id serial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
   job_date date not null,
   zone text not null,
   skill_tier text not null check (skill_tier in ('unskilled','semi-skilled','skilled')),
@@ -37,14 +44,12 @@ create table if not exists job_entries (
 
 create index if not exists idx_job_entries_user_date on job_entries (user_id, job_date desc);
 
--- Row Level Security
+-- Row Level Security. The API uses the authenticated backend connection and
+-- applies the user_id filter in every entry/report query.
 alter table job_entries enable row level security;
 
-create policy "select_own_entries" on job_entries
-  for select using (auth.uid() = user_id);
-
-create policy "insert_own_entries" on job_entries
-  for insert with check (auth.uid() = user_id);
+drop policy if exists "select_own_entries" on job_entries;
+drop policy if exists "insert_own_entries" on job_entries;
 
 -- No update/delete policy is created intentionally: entries are immutable
 -- once logged, which keeps the ledger and the explanation trail trustworthy.

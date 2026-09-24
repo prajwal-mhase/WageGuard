@@ -10,7 +10,7 @@ and a specific formula -- not a model output.
 from datetime import date
 from typing import Optional
 
-from database import get_cursor
+from database import get_cursor, sql
 from schemas import JobEntryIn
 
 
@@ -35,7 +35,7 @@ def find_wage_rate(zone: str, skill_tier: str, job_date: date) -> dict:
         limit 1
     """
     with get_cursor() as cur:
-        cur.execute(query.replace("%s", "?"), (zone, skill_tier, job_date, job_date))
+        cur.execute(sql(query), (zone, skill_tier, job_date, job_date))
         row = cur.fetchone()
 
     if not row:

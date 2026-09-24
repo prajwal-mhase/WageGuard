@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, Response
 from jinja2 import Template
 
 from auth import get_current_user_id
-from database import get_cursor
+from database import get_cursor, sql
 
 router = APIRouter(prefix="/entries", tags=["reports"])
 
@@ -79,7 +79,7 @@ def get_report(entry_id: int, user_id: str = Depends(get_current_user_id)):
         where je.id = %s and je.user_id = %s
     """
     with get_cursor() as cur:
-        cur.execute(query.replace("%s", "?"), (entry_id, user_id))
+        cur.execute(sql(query), (entry_id, user_id))
         row = cur.fetchone()
 
     if not row:
